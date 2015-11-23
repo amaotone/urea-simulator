@@ -2,6 +2,8 @@ require "matrix"
 require "./const"
 
 class Flasher
+  attr_accessor :vapor, :liquid
+
   def initialize(inlet, temperature)
     @inlet = inlet
     @temp = temperature
@@ -10,8 +12,8 @@ class Flasher
   end
 
   def optimize_by_recovery_ratios(recovery_ratios)
-    @liquid = [@inlet[E_NH3]*recovery_ratios[E_NH3], @inlet[CARBAMATE]*recovery_ratios[CARBAMATE], @inlet[H2O]*recovery_ratios[H2O], @inlet[UREA]]
-    @vapor = (Vector[*@inlet]-Vector[*@liquid]).to_a
+    @vapor = [@inlet[E_NH3]*recovery_ratios[E_NH3], @inlet[CARBAMATE]*recovery_ratios[CARBAMATE], @inlet[H2O]*recovery_ratios[H2O], 0.0]
+    @liquid = (Vector[*@inlet]-Vector[*@vapor]).to_a
 
     new_recovery_ratios = []
     tmp = (gamma(E_NH3)*p0(E_NH3))/(gamma(CARBAMATE)*p0(CARBAMATE))*(recovery_ratios[CARBAMATE]/(1-recovery_ratios[CARBAMATE]))
@@ -30,7 +32,21 @@ class Flasher
     return nil
   end
 
-  def optimize_by_total_pressure()
+  def optimize_by_total_pressure(expected_total_pressure, section)
+    min, max = section
+    mid = (min + max)/2
+    optimize_by_recovery_ratios([0.0, mid, 0.0])
+    total_pressure = partial_pressure(E_NH3)+partial_pressure(CARBAMATE)+partial_pressure(H2O)
+    if (max-min).abs < ACCURACY
+      return @vapor, @liquid
+    else
+      if total_pressure > expected_total_pressure
+        new_section = [mid, max]
+      else
+        new_section = [min, mid]
+      end
+      optimize_by_total_pressure(expected_total_pressure, new_section)
+    end
   end
 
   private
