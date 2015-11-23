@@ -1,16 +1,6 @@
 require "matrix"
 require "./reactor"
 require "./flasher"
-# x0 = [3.0, 1.0, 0.6, 0.0]
-# reactor = Reactor.new(x0, 200.0)
-# p reactor.outlet
-# flasher = Flasher.new(reactor.outlet, 120.0)
-# flasher.optimize_by_recovery_ratios([0.0, 0.9, 0.0])
-# p flasher.vapor
-# p flasher.liquid
-# flasher.optimize_by_total_pressure(16.12, [0.0, 1.0])
-# p flasher.vapor.map{|i| i.round(3)}
-# p flasher.liquid.map{|i| i.round(3)}
 
 def optimize(x1, x4, x6, old_x7)
   x2 = (Vector[*x1] + Vector[*x4] + Vector[*x6]).to_a
@@ -25,13 +15,16 @@ def optimize(x1, x4, x6, old_x7)
   x6 = low_flasher.vapor
   x7 = low_flasher.liquid
   if (x7[E_NH3]-old_x7[E_NH3]).abs < ACCURACY
-    x7
+    {
+      pipes: [x1, x2, x3, x4, x5, x6, x7],
+      reactor: reactor,
+      high_flasher: high_flasher,
+      low_flasher: low_flasher
+    }
   else
     optimize(x1, x4, x6, x7)
   end
 end
-
-
 
 nh3 = 2.051
 co2 = 1.002
@@ -39,4 +32,13 @@ x1 = [nh3-co2*2, co2, 0.0, 0.0]
 x4 = [0.0, 0.0, 0.0, 0.0]
 x6 = [0.0, 0.0, 0.0, 0.0]
 x7 = [0.0, 0.0, 0.0, 0.0]
-p optimize(x1, x4, x6, x7)
+result = optimize(x1, x4, x6, x7)
+result[:pipes].each.with_index(1) do |pipe, index|
+  puts "x#{index}: #{pipe.map{|i| i.round(3)}}"
+end
+cv = result[:pipes][6][UREA]/result[:pipes][0][CARBAMATE]
+puts "cv: #{cv.round(3)}"
+p_high = result[:high_flasher].total_pressure
+p_low = result[:low_flasher].total_pressure
+puts "P_high: #{p_high.round(3)} atm"
+puts "P_low: #{p_low.round(3)} atm"

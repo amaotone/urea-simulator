@@ -36,7 +36,6 @@ class Flasher
     min, max = section
     mid = (min + max)/2
     optimize_by_recovery_ratios([0.0, mid, 0.0])
-    total_pressure = partial_pressure(E_NH3)+partial_pressure(CARBAMATE)+partial_pressure(H2O)
     if (max-min).abs < ACCURACY
       return @vapor, @liquid
     else
@@ -47,6 +46,10 @@ class Flasher
       end
       optimize_by_total_pressure(expected_total_pressure, new_section)
     end
+  end
+
+  def total_pressure
+    partial_pressure(E_NH3)+partial_pressure(CARBAMATE)+partial_pressure(H2O)
   end
 
   private
