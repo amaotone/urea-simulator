@@ -15,6 +15,7 @@ class Flasher
     @vapor = [@inlet[E_NH3]*recovery_ratios[E_NH3], @inlet[CARBAMATE]*recovery_ratios[CARBAMATE], @inlet[H2O]*recovery_ratios[H2O], 0.0]
     @liquid = (Vector[*@inlet]-Vector[*@vapor]).to_a
 
+    # calc new recovery ratios ([eta1, eta2, eta3])
     new_recovery_ratios = []
     tmp = (gamma(E_NH3)*p0(E_NH3))/(gamma(CARBAMATE)*p0(CARBAMATE))*(recovery_ratios[CARBAMATE]/(1-recovery_ratios[CARBAMATE]))
     new_recovery_ratios[E_NH3] = tmp/(1+tmp)
@@ -32,19 +33,20 @@ class Flasher
     return nil
   end
 
-  def optimize_by_total_pressure(expected_total_pressure, section)
-    min, max = section
+  def optimize_by_total_pressure(expected_total_pressure, bounds)
+    min, max = bounds
     mid = (min + max)/2
     optimize_by_recovery_ratios([0.0, mid, 0.0])
+
     if (max-min).abs < ACCURACY
       return @vapor, @liquid
     else
       if total_pressure > expected_total_pressure
-        new_section = [mid, max]
+        new_bounds = [mid, max]
       else
-        new_section = [min, mid]
+        new_bounds = [min, mid]
       end
-      optimize_by_total_pressure(expected_total_pressure, new_section)
+      optimize_by_total_pressure(expected_total_pressure, new_bounds)
     end
   end
 

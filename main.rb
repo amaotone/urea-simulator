@@ -11,7 +11,7 @@ def optimize(x1, x4, x6, old_x7)
   x3 = reactor.outlet
 
   # high pressure flasher
-  high_flasher = Flasher.new(reactor.outlet, 133.0)
+  high_flasher = Flasher.new(x3, 133.0)
   high_flasher.optimize_by_recovery_ratios([0.0, 0.8228, 0.0])
   x4 = high_flasher.vapor
   x5 = high_flasher.liquid
@@ -45,7 +45,7 @@ x7 = [0.0, 0.0, 0.0, 0.0]
 # optimizing
 result = optimize(x1, x4, x6, x7)
 
-# show result
+# show results
 result[:pipes].each.with_index(1) do |pipe, index|
   puts "x#{index}: #{pipe.map{|i| i.round(3)}}"
 end
